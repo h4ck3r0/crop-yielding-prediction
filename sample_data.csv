@@ -1,134 +1,220 @@
-Crop,Crop_Year,Season,State,Area,Production,Annual_Rainfall,Fertilizer,Pesticide,Yield
-Arecanut,1997,Whole Year ,Assam,73814,56708,2051.4,7024878.38,22882.34,0.796086957
-Arhar/Tur,1997,Kharif     ,Assam,6637,4685,2051.4,631643.29,2057.47,0.710434783
-Castor seed,1997,Kharif     ,Assam,796,22,2051.4,75755.32,246.76,0.238333333
-Coconut ,1997,Whole Year ,Assam,19656,126905000,2051.4,1870661.52,6093.36,5238.051739
-Cotton(lint),1997,Kharif     ,Assam,1739,794,2051.4,165500.63,539.09,0.420909091
-Dry chillies,1997,Whole Year ,Assam,13587,9073,2051.4,1293074.79,4211.97,0.643636364
+import numpy as npson,State,Area,Production,Annual_Rainfall,Fertilizer,Pesticide,Yield
+import matplotlib.pyplot as plt,73814,56708,2051.4,7024878.38,22882.34,0.796086957
+import pandas as pdif     ,Assam,6637,4685,2051.4,631643.29,2057.47,0.710434783
+from sklearn.model_selection import train_test_split55.32,246.76,0.238333333
+from sklearn.linear_model import LinearRegression051.4,1870661.52,6093.36,5238.051739
+from sklearn.metrics import r2_score1739,794,2051.4,165500.63,539.09,0.420909091
+from sklearn.metrics import mean_squared_error,2051.4,1293074.79,4211.97,0.643636364
 Gram,1997,Rabi       ,Assam,2979,1507,2051.4,283511.43,923.49,0.465454545
 Jute,1997,Kharif     ,Assam,94520,904095,2051.4,8995468.4,29301.2,9.919565217
-Linseed,1997,Rabi       ,Assam,10098,5158,2051.4,961026.66,3130.38,0.461363636
-Maize,1997,Kharif     ,Assam,19216,14721,2051.4,1828786.72,5956.96,0.615652174
+# Importing the dataset ,Assam,10098,5158,2051.4,961026.66,3130.38,0.461363636
+df = pd.read_csv('crop_yield.csv'),14721,2051.4,1828786.72,5956.96,0.615652174
 Mesta,1997,Kharif     ,Assam,5915,29003,2051.4,562930.55,1833.65,4.568947368
-Niger seed,1997,Whole Year ,Assam,9914,5076,2051.4,943515.38,3073.34,0.482352941
-Onion,1997,Whole Year ,Assam,7832,17943,2051.4,745371.44,2427.92,2.342608696
-Other  Rabi pulses,1997,Rabi       ,Assam,108297,58272,2051.4,10306625.49,33572.07,0.520869565
+df['Crop'] = df['Crop'].str.title()914,5076,2051.4,943515.38,3073.34,0.482352941
+df['State'] = df['State'].str.title()43,2051.4,745371.44,2427.92,2.342608696
+df['Season'] = df['Season'].str.title()am,108297,58272,2051.4,10306625.49,33572.07,0.520869565
 Potato,1997,Whole Year ,Assam,75259,671871,2051.4,7162399.03,23330.29,7.561304348
-Rapeseed &Mustard,1997,Rabi       ,Assam,279292,154772,2051.4,26580219.64,86580.52,0.554782609
-Rice,1997,Autumn     ,Assam,607358,398311,2051.4,57802260.86,188280.98,0.780869565
+pd.options.display.float_format = '{:.2f}'.format54772,2051.4,26580219.64,86580.52,0.554782609
+df.describe(include=["int64","float64"]).T2051.4,57802260.86,188280.98,0.780869565
 Rice,1997,Summer     ,Assam,174974,209623,2051.4,16652275.58,54241.94,1.060434783
 Rice,1997,Winter     ,Assam,1743321,1647296,2051.4,165911859.6,540429.51,0.941304348
-Sesamum,1997,Whole Year ,Assam,15765,8257,2051.4,1500355.05,4887.15,0.487391304
-Small millets,1997,Kharif     ,Assam,10490,5391,2051.4,998333.3,3251.9,0.473
+df_copy = df.copy()Year ,Assam,15765,8257,2051.4,1500355.05,4887.15,0.487391304
+df_copy = df_copy.drop(['Area', 'Production'], axis=1),998333.3,3251.9,0.473
 Sugarcane,1997,Kharif     ,Assam,31318,1287451,2051.4,2980534.06,9708.58,41.89695652
 Sweet potato,1997,Whole Year ,Assam,9380,32618,2051.4,892694.6,2907.8,3.440434783
-Tapioca,1997,Whole Year ,Assam,2465,11728,2051.4,234594.05,764.15,4.41826087
+category_columns = df_copy.select_dtypes(include=['object']).columns # select object type columns
 Tobacco,1997,Whole Year ,Assam,433,26,2051.4,41208.61,134.23,0.38
-Turmeric,1997,Whole Year ,Assam,10071,6974,2051.4,958457.07,3122.01,0.67
+df_copy = pd.get_dummies(df_copy, columns = category_columns, drop_first=True) # one hot encoding
 Wheat,1997,Rabi       ,Assam,84698,110054,2051.4,8060708.66,26256.38,1.25952381
-Arecanut,1997,Whole Year ,Karnataka,93100,133342,1266.7,8860327,28861,1.293571429
-Arhar/Tur,1997,Kharif     ,Karnataka,421810,98473,1266.7,40143657.7,130761.1,0.268235294
+boolean_cols_auto = df_copy.select_dtypes(include=['bool']).columns61,1.293571429
+df_copy[boolean_cols_auto] = df_copy[boolean_cols_auto].astype(int) # convert boolean to int
 Bajra,1997,Kharif     ,Karnataka,301149,132056,1266.7,28660350.33,93356.19,0.404545455
 Bajra,1997,Summer     ,Karnataka,820,662,1266.7,78039.4,254.2,0.81
-Black pepper,1997,Kharif     ,Karnataka,3825,924,1266.7,364025.25,1185.75,0.4375
-Cardamom,1997,Whole Year ,Karnataka,21230,1214,1266.7,2020459.1,6581.3,0.058571429
+x = df_copy.drop(['Yield'], axis = 1)ka,3825,924,1266.7,364025.25,1185.75,0.4375
+y = df_copy['Yield']Year ,Karnataka,21230,1214,1266.7,2020459.1,6581.3,0.058571429
 Coriander,1997,Whole Year ,Karnataka,17317,2853,1266.7,1648058.89,5368.27,0.121333333
-Dry chillies,1997,Kharif     ,Karnataka,186579,139206,1266.7,17756723.43,57839.49,1.078333333
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42),1.078333333
 Dry chillies,1997,Rabi       ,Karnataka,4565,7895,1266.7,434451.05,1415.15,1.869444444
-Garlic,1997,Whole Year ,Karnataka,5061,3799,1266.7,481655.37,1568.91,1.585
-Ginger,1997,Kharif     ,Karnataka,3619,4745,1266.7,344420.23,1121.89,1.262307692
-Groundnut,1997,Kharif     ,Karnataka,847666,525562,1266.7,80672373.22,262776.46,0.709411765
-Groundnut,1997,Rabi       ,Karnataka,192416,181071,1266.7,18312230.72,59648.96,1.133333333
-Horse-gram,1997,Kharif     ,Karnataka,178872,80124,1266.7,17023248.24,55450.32,0.45
-Horse-gram,1997,Rabi       ,Karnataka,163173,82572,1266.7,15529174.41,50583.63,0.514705882
-Jowar,1997,Kharif     ,Karnataka,389690,516093,1266.7,37086797.3,120803.9,1.228
-Jowar,1997,Rabi       ,Karnataka,1501172,722773,1266.7,142866539.2,465363.32,0.510714286
+# Initialize lists to store model performance metrics1655.37,1568.91,1.585
+models = [],Kharif     ,Karnataka,3619,4745,1266.7,344420.23,1121.89,1.262307692
+training_scores_r2 = []   ,Karnataka,847666,525562,1266.7,80672373.22,262776.46,0.709411765
+training_scores_adj_r2 = []Karnataka,192416,181071,1266.7,18312230.72,59648.96,1.133333333
+training_scores_rmse = []  ,Karnataka,178872,80124,1266.7,17023248.24,55450.32,0.45
+testing_scores_r2 = []     ,Karnataka,163173,82572,1266.7,15529174.41,50583.63,0.514705882
+testing_scores_adj_r2 = []nataka,389690,516093,1266.7,37086797.3,120803.9,1.228
+testing_scores_rmse = []arnataka,1501172,722773,1266.7,142866539.2,465363.32,0.510714286
 Jowar,1997,Summer     ,Karnataka,6137,15135,1266.7,584058.29,1902.47,2.470909091
-Maize,1997,Kharif     ,Karnataka,502797,1391132,1266.7,47851190.49,155867.07,2.687777778
-Maize,1997,Rabi       ,Karnataka,48844,98932,1266.7,4648483.48,15141.64,1.98
-Maize,1997,Summer     ,Karnataka,9730,20893,1266.7,926004.1,3016.3,2.165714286
-Ragi,1997,Kharif     ,Karnataka,897921,1214282,1266.7,85455141.57,278355.51,1.191333333
-Ragi,1997,Rabi       ,Karnataka,27104,33696,1266.7,2579487.68,8402.24,1.312222222
-Ragi,1997,Summer     ,Karnataka,13521,25035,1266.7,1286793.57,4191.51,1.847777778
-Rice,1997,Kharif     ,Karnataka,1031530,2340493,1266.7,98170710.1,319774.3,2.2335
-Rice,1997,Rabi       ,Karnataka,53889,109350,1266.7,5128616.13,16705.59,2.073846154
-Rice,1997,Summer     ,Karnataka,268044,762759,1266.7,25509747.48,83093.64,2.829444444
-Sugarcane,1997,Whole Year ,Karnataka,308857,28999269,1266.7,29393920.69,95745.67,91.74736842
-Turmeric,1997,Whole Year ,Karnataka,4342,24108,1266.7,413228.14,1346.02,4.452941176
-Wheat,1997,Rabi       ,Karnataka,250698,118512,1266.7,23858928.66,77716.38,0.548333333
-Arecanut,1997,Whole Year ,Kerala,76145,93995,3252.4,7246719.65,23604.95,1.147857143
-Black pepper,1997,Whole Year ,Kerala,173855,55520,3252.4,16545780.35,53895.05,0.240714286
-Cashewnut,1997,Whole Year ,Kerala,96073,74142,3252.4,9143267.41,29782.63,0.589285714
-Coconut ,1997,Whole Year ,Kerala,884344,5210000000,3252.4,84163018.48,274146.64,5376.054286
-Tapioca,1997,Whole Year ,Kerala,132875,2841819,3252.4,12645713.75,41191.25,22.80357143
-Arecanut,1997,Whole Year ,Meghalaya,9569,12116,3818.2,910681.73,2966.39,1.245714286
-Arhar/Tur,1997,Kharif     ,Meghalaya,865,683,3818.2,82322.05,268.15,0.806666667
-Banana,1997,Whole Year ,Meghalaya,5239,63011,3818.2,498595.63,1624.09,11.20714286
-Castor seed,1997,Rabi       ,Meghalaya,30,15,3818.2,2855.1,9.3,0.49
-Cotton(lint),1997,Kharif     ,Meghalaya,7544,5590,3818.2,717962.48,2338.64,0.796666667
-Dry chillies,1997,Whole Year ,Meghalaya,1766,1106,3818.2,168070.22,547.46,0.64
-Ginger,1997,Kharif     ,Meghalaya,7357,45260,3818.2,700165.69,2280.67,6.054285714
-Gram,1997,Rabi       ,Meghalaya,443,270,3818.2,42160.31,137.33,0.613333333
-Jute,1997,Kharif     ,Meghalaya,4243,34683,3818.2,403806.31,1315.33,8.436666667
-Linseed,1997,Kharif     ,Meghalaya,50,22,3818.2,4758.5,15.5,0.44
-Maize,1997,Kharif     ,Meghalaya,17175,24878,3818.2,1634544.75,5324.25,1.444285714
-Mesta,1997,Kharif     ,Meghalaya,4688,21558,3818.2,446156.96,1453.28,4.68
-Mesta,1997,Whole Year ,Meghalaya,861,713,3818.2,81941.37,266.91,0.7525
-Other  Rabi pulses,1997,Rabi       ,Meghalaya,1909,1511,3818.2,181679.53,591.79,0.777142857
-Potato,1997,Whole Year ,Meghalaya,20764,200509,3818.2,1976109.88,6436.84,8.641428571
-Rapeseed &Mustard,1997,Rabi       ,Meghalaya,6914,4467,3818.2,658005.38,2143.34,0.608571429
-Rice,1997,Kharif     ,Meghalaya,105170,150101,3818.2,10009028.9,32602.7,1.378571429
-Sesamum,1997,Kharif     ,Meghalaya,1326,688,3818.2,126195.42,411.06,0.575714286
-Small millets,1997,Kharif     ,Meghalaya,2804,2237,3818.2,266856.68,869.24,0.861428571
-Soyabean,1997,Kharif     ,Meghalaya,898,814,3818.2,85462.66,278.38,0.921428571
-Sugarcane,1997,Whole Year ,Meghalaya,82,225,3818.2,7803.94,25.42,2.352
-Sweet potato,1997,Whole Year ,Meghalaya,5212,16978,3818.2,496026.04,1615.72,3.221428571
-Tapioca,1997,Whole Year ,Meghalaya,3959,21087,3818.2,376778.03,1227.29,6.537142857
-Tobacco,1997,Rabi       ,Meghalaya,742,505,3818.2,70616.14,230.02,0.618
-Turmeric,1997,Whole Year ,Meghalaya,1401,7126,3818.2,133333.17,434.31,5.425714286
-Wheat,1997,Rabi       ,Meghalaya,4287,6894,3818.2,407993.79,1328.97,1.385
-Arecanut,1997,Whole Year ,West Bengal,8058,12423,1852.9,766879.86,2497.98,1.691764706
-Arhar/Tur,1997,Whole Year ,West Bengal,3630,2181,1852.9,345467.1,1125.3,0.777692308
-Bajra,1997,Kharif     ,West Bengal,207,95,1852.9,19700.19,64.17,0.426666667
-Barley,1997,Whole Year ,West Bengal,6116,5034,1852.9,582059.72,1895.96,1.68
+def evaluate_model_performance(model, x_train, y_train, x_test, y_test):7.07,2.687777778
+    """997,Rabi       ,Karnataka,48844,98932,1266.7,4648483.48,15141.64,1.98
+    Evaluates R², Adjusted R², and RMSE of a given model on training and testing data.
+    ,1997,Kharif     ,Karnataka,897921,1214282,1266.7,85455141.57,278355.51,1.191333333
+    Parameters:      ,Karnataka,27104,33696,1266.7,2579487.68,8402.24,1.312222222
+    - model: The machine learning model to evaluate1286793.57,4191.51,1.847777778
+    - x_train: Training feature set1530,2340493,1266.7,98170710.1,319774.3,2.2335
+    - y_train: Training target values,109350,1266.7,5128616.13,16705.59,2.073846154
+    - x_test: Testing feature set68044,762759,1266.7,25509747.48,83093.64,2.829444444
+    - y_test: Testing target valuesa,308857,28999269,1266.7,29393920.69,95745.67,91.74736842
+    """c,1997,Whole Year ,Karnataka,4342,24108,1266.7,413228.14,1346.02,4.452941176
+    # Add model to the models list50698,118512,1266.7,23858928.66,77716.38,0.548333333
+    models.append(model.__class__.__name__)5,3252.4,7246719.65,23604.95,1.147857143
+    k pepper,1997,Whole Year ,Kerala,173855,55520,3252.4,16545780.35,53895.05,0.240714286
+    # Fit the modele Year ,Kerala,96073,74142,3252.4,9143267.41,29782.63,0.589285714
+    model.fit(x_train, y_train)a,884344,5210000000,3252.4,84163018.48,274146.64,5376.054286
+    oca,1997,Whole Year ,Kerala,132875,2841819,3252.4,12645713.75,41191.25,22.80357143
+    # Predictions for training and testing data3818.2,910681.73,2966.39,1.245714286
+    y_train_pred = model.predict(x_train)683,3818.2,82322.05,268.15,0.806666667
+    y_test_pred = model.predict(x_test)63011,3818.2,498595.63,1624.09,11.20714286
+    or seed,1997,Rabi       ,Meghalaya,30,15,3818.2,2855.1,9.3,0.49
+    # Calculate R² scores    ,Meghalaya,7544,5590,3818.2,717962.48,2338.64,0.796666667
+    train_r2 = r2_score(y_train, y_train_pred) * 10018.2,168070.22,547.46,0.64
+    test_r2 = r2_score(y_test, y_test_pred) * 100.2,700165.69,2280.67,6.054285714
+    ,1997,Rabi       ,Meghalaya,443,270,3818.2,42160.31,137.33,0.613333333
+    # Calculate Adjusted R² scores43,34683,3818.2,403806.31,1315.33,8.436666667
+    n_train, p_train = x_train.shape0,22,3818.2,4758.5,15.5,0.44
+    n_test, p_test = x_test.shape17175,24878,3818.2,1634544.75,5324.25,1.444285714
+    train_adj_r2 = 100 * (1 - (1 - train_r2 / 100) * (n_train - 1) / (n_train - p_train - 1))
+    test_adj_r2 = 100 * (1 - (1 - test_r2 / 100) * (n_test - 1) / (n_test - p_test - 1))
+    r  Rabi pulses,1997,Rabi       ,Meghalaya,1909,1511,3818.2,181679.53,591.79,0.777142857
+    # Calculate RMSE scoreshalaya,20764,200509,3818.2,1976109.88,6436.84,8.641428571
+    train_rmse = np.sqrt(mean_squared_error(y_train, y_train_pred))5.38,2143.34,0.608571429
+    test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))32602.7,1.378571429
+    mum,1997,Kharif     ,Meghalaya,1326,688,3818.2,126195.42,411.06,0.575714286
+    # Append scores to respective listsa,2804,2237,3818.2,266856.68,869.24,0.861428571
+    training_scores_r2.append(train_r2),814,3818.2,85462.66,278.38,0.921428571
+    training_scores_adj_r2.append(train_adj_r2)8.2,7803.94,25.42,2.352
+    training_scores_rmse.append(train_rmse)2,16978,3818.2,496026.04,1615.72,3.221428571
+    testing_scores_r2.append(test_r2)59,21087,3818.2,376778.03,1227.29,6.537142857
+    testing_scores_adj_r2.append(test_adj_r2) 8.2,70616.14,230.02,0.618
+    testing_scores_rmse.append(test_rmse) 126,3818.2,133333.17,434.31,5.425714286
+    t,1997,Rabi       ,Meghalaya,4287,6894,3818.2,407993.79,1328.97,1.385
+    # Display scoresYear ,West Bengal,8058,12423,1852.9,766879.86,2497.98,1.691764706
+    print(f"{model.__class__.__name__} Performance Metrics:")7.1,1125.3,0.777692308
+    print(f"Training Data: R² = {train_r2:.2f}%, Adjusted R² = {train_adj_r2:.2f}%, RMSE = {train_rmse:.4f}")
+    print(f"Testing Data : R² = {test_r2:.2f}%, Adjusted R² = {test_adj_r2:.2f}%, RMSE = {test_rmse:.4f}\n")
 Cardamom,1997,Whole Year ,West Bengal,2674,7,1852.9,254484.58,828.94,0
 Castor seed,1997,Whole Year ,West Bengal,660,46,1852.9,62812.2,204.6,0.07
-Coconut ,1997,Whole Year ,West Bengal,24273,306202300,1852.9,2310061.41,7524.63,13003.78778
-Cotton(lint),1997,Kharif     ,West Bengal,26000,52000,1852.9,2474420,8060,2
-Dry chillies,1997,Whole Year ,West Bengal,64034,55569,1852.9,6094115.78,19850.54,0.942777778
-Gram,1997,Rabi       ,West Bengal,25485,16994,1852.9,2425407.45,7900.35,0.5975
-Groundnut,1997,Whole Year ,West Bengal,29615,38672,1852.9,2818459.55,9180.65,1.13
-Horse-gram,1997,Kharif     ,West Bengal,5645,2556,1852.9,537234.65,1749.95,0.438888889
-Jowar,1997,Whole Year ,West Bengal,948,450,1852.9,90221.16,293.88,0.482
+evaluate_model_performance(est Bengal,24273,306202300,1852.9,2310061.41,7524.63,13003.78778
+    model=LinearRegression(),,West Bengal,26000,52000,1852.9,2474420,8060,2
+    x_train=x_train,ole Year ,West Bengal,64034,55569,1852.9,6094115.78,19850.54,0.942777778
+    y_train=y_train, ,West Bengal,25485,16994,1852.9,2425407.45,7900.35,0.5975
+    x_test=x_test,le Year ,West Bengal,29615,38672,1852.9,2818459.55,9180.65,1.13
+    y_test=y_testharif     ,West Bengal,5645,2556,1852.9,537234.65,1749.95,0.438888889
+)owar,1997,Whole Year ,West Bengal,948,450,1852.9,90221.16,293.88,0.482
 Jute,1997,Kharif     ,West Bengal,641574,7549700,1852.9,61058597.58,198887.94,13.44588235
-Khesari,1997,Rabi       ,West Bengal,25261,28460,1852.9,2404089.37,7830.91,1.095882353
-Linseed,1997,Whole Year ,West Bengal,16486,4210,1852.9,1568972.62,5110.66,0.251538462
-Maize,1997,Whole Year ,West Bengal,35469,130390,1852.9,3375584.73,10995.39,2.658461538
-Masoor,1997,Rabi       ,West Bengal,51202,35040,1852.9,4872894.34,15872.62,0.662352941
-Mesta,1997,Kharif     ,West Bengal,9689,89000,1852.9,922102.13,3003.59,9.154166667
-Moong(Green Gram),1997,Kharif     ,West Bengal,1490,711,1852.9,141803.3,461.9,0.548888889
-Moong(Green Gram),1997,Rabi       ,West Bengal,3269,1710,1852.9,311110.73,1013.39,0.542857143
-Moong(Green Gram),1997,Summer     ,West Bengal,9959,303,1852.9,947798.03,3087.29,0.046
-Niger seed,1997,Rabi       ,West Bengal,50808100,38657300,1852.9,4835406877,15750511,0.698888889
-Niger seed,1997,Whole Year ,West Bengal,6512,3522,1852.9,619747.04,2018.72,0.40375
-Other Kharif pulses,1997,Kharif     ,West Bengal,1279,725,1852.9,121722.43,396.49,0.585
-Potato,1997,Whole Year ,West Bengal,284015,5581553,1852.9,27029707.55,88044.65,18.23722222
+df_model = pd.DataFrame(,West Bengal,25261,28460,1852.9,2404089.37,7830.91,1.095882353
+        {"Algorithms": models,Bengal,16486,4210,1852.9,1568972.62,5110.66,0.251538462
+         "Training Score R2": training_scores_r2,852.9,3375584.73,10995.39,2.658461538
+         "Training Score Adjusted R2": training_scores_adj_r2,.34,15872.62,0.662352941
+         "Training Score RMSE": training_scores_rmse,922102.13,3003.59,9.154166667
+         "Testing Score R2": testing_scores_r2,1490,711,1852.9,141803.3,461.9,0.548888889
+         "Testing Score Adjusted R2": testing_scores_adj_r2,2.9,311110.73,1013.39,0.542857143
+         "Testing Score RMSE": testing_scores_rmse,,303,1852.9,947798.03,3087.29,0.046
+        }),1997,Rabi       ,West Bengal,50808100,38657300,1852.9,4835406877,15750511,0.698888889
+                   le Year ,West Bengal,6512,3522,1852.9,619747.04,2018.72,0.40375
+df_model_sort = df_model.sort_values(by="Testing Score R2", ascending=False)96.49,0.585
+print(df_model_sort)ar ,West Bengal,284015,5581553,1852.9,27029707.55,88044.65,18.23722222
 Ragi,1997,Autumn     ,West Bengal,12607,15330,1852.9,1199808.19,3908.17,0.986
-Rapeseed &Mustard,1997,Whole Year ,West Bengal,327123,250950,1852.9,31132295.91,101408.13,0.718333333
-Rice,1997,Autumn     ,West Bengal,423121,751970,1852.9,40268425.57,131167.51,1.837222222
-Rice,1997,Summer     ,West Bengal,1206829,3569520,1852.9,114853915.9,374116.99,2.843888889
-Rice,1997,Winter     ,West Bengal,4270328,8915100,1852.9,406407115.8,1323801.68,1.985555556
-Safflower,1997,Whole Year ,West Bengal,10800,3000,1852.9,1027836,3348,0.2975
-Sannhamp,1997,Whole Year ,West Bengal,2015,9073,1852.9,191767.55,624.65,4.598571429
-Sesamum,1997,Whole Year ,West Bengal,127913,88943,1852.9,12173480.21,39653.03,0.649444444
-Small millets,1997,Whole Year ,West Bengal,5046,3222,1852.9,480227.82,1564.26,0.626666667
+ax = df_model_sort.plot(hole Year ,West Bengal,327123,250950,1852.9,31132295.91,101408.13,0.718333333
+    x="Algorithms",  ,West Bengal,423121,751970,1852.9,40268425.57,131167.51,1.837222222
+    y=["Training Score R2","Testing Score R2"],20,1852.9,114853915.9,374116.99,2.843888889
+    kind="bar",r     ,West Bengal,4270328,8915100,1852.9,406407115.8,1323801.68,1.985555556
+    figsize=(15, 9), Year ,West Bengal,10800,3000,1852.9,1027836,3348,0.2975
+    colormap="Set3",Year ,West Bengal,2015,9073,1852.9,191767.55,624.65,4.598571429
+    width=0.8Whole Year ,West Bengal,127913,88943,1852.9,12173480.21,39653.03,0.649444444
+)mall millets,1997,Whole Year ,West Bengal,5046,3222,1852.9,480227.82,1564.26,0.626666667
 Soyabean,1997,Kharif     ,West Bengal,1555,1172,1852.9,147989.35,482.05,1.196666667
-Sugarcane,1997,Whole Year ,West Bengal,25797,1818700,1852.9,2455100.49,7997.07,67.83625
-Sunflower,1997,Whole Year ,West Bengal,278,1,1852.9,26457.26,86.18,0
-Turmeric,1997,Whole Year ,West Bengal,12481,23556,1852.9,1187816.77,3869.11,1.661111111
+# Save the trained model for predictions5797,1818700,1852.9,2455100.49,7997.07,67.83625
+final_model = LinearRegression()Bengal,278,1,1852.9,26457.26,86.18,0
+final_model.fit(x_train, y_train)ngal,12481,23556,1852.9,1187816.77,3869.11,1.661111111
 Urad,1997,Kharif     ,West Bengal,69271,44480,1852.9,6592521.07,21474.01,1.825
-Urad,1997,Rabi       ,West Bengal,16694,10553,1852.9,1588767.98,5175.14,0.628333333
-Wheat,1997,Rabi       ,West Bengal,367374,810480,1852.9,34962983.58,113885.94,1.886666667
+def predict_yield(model, new_data):Urad,1997,Rabi       ,West Bengal,16694,10553,1852.9,1588767.98,5175.14,0.628333333
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# interactive_prediction()# Uncomment to use interactive predictions        print("Please check your input and try again.")        print(f"Error making prediction: {e}")    except Exception as e:        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f}")        prediction = predict_yield(final_model, input_data)    try:        })        'Season': [season]        'State': [state],        'Crop': [crop],    input_data = pd.DataFrame({        season = input("Enter season: ")    state = input("Enter state name: ")    crop = input("Enter crop name: ")    print("\n=== Crop Yield Prediction ===")def interactive_prediction():# Function for interactive predictionsprint(f"Maize, Gujarat, Summer: {pred3[0]:.2f}")pred3 = predict_yield(final_model, sample3)})    'Season': ['Summer']    'State': ['Gujarat'],    'Crop': ['Maize'], sample3 = pd.DataFrame({# Example 3: Maize in Gujarat during Summer seasonprint(f"Wheat, Punjab, Rabi: {pred2[0]:.2f}")pred2 = predict_yield(final_model, sample2)})    'Season': ['Rabi']    'State': ['Punjab'],    'Crop': ['Wheat'],sample2 = pd.DataFrame({# Example 2: Wheat in Punjab during Rabi seasonprint(f"Rice, Karnataka, Kharif: {pred1[0]:.2f}")pred1 = predict_yield(final_model, sample1)})    'Season': ['Kharif']    'State': ['Karnataka'],    'Crop': ['Rice'],sample1 = pd.DataFrame({# Example 1: Rice in Karnataka during Kharif seasonprint("\nPrediction Examples:")# Example usage: prediction for different crop combinations    return predictions    predictions = model.predict(new_data_encoded)    # Make prediction        new_data_encoded = new_data_encoded[x.columns]    # Keep only the columns that were used during training                new_data_encoded[col] = 0        if col not in new_data_encoded.columns:    for col in x.columns:    # Add missing columns with zeros    # Make sure columns match training data (x)        new_data_encoded = pd.get_dummies(new_data, columns=cat_cols, drop_first=True)    cat_cols = new_data.select_dtypes(include=['object']).columns    # Perform one-hot encoding on categorical variables            new_data[col] = new_data[col].str.title()    for col in new_data.select_dtypes(include=['object']).columns:    # Apply string title case to match training preprocessing    # Preprocess the new data the same way as training data    """    - Predicted yield value    Returns:        - new_data: DataFrame with Crop, State, Season columns (and any other required features)    - model: Trained model    Parameters:        Makes yield predictions for new crop data.    """Wheat,1997,Rabi       ,West Bengal,367374,810480,1852.9,34962983.58,113885.94,1.886666667
 Arecanut,1998,Kharif     ,Puducherry,66,23,1434.5875,6520.8,19.14,0.35
 Bajra,1998,Kharif     ,Puducherry,149,324,1434.5875,14721.2,43.21,2.17
 Black pepper,1998,Kharif     ,Puducherry,12,7,1434.5875,1185.6,3.48,0.58

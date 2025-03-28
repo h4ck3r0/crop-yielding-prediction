@@ -3,37 +3,47 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.preprocessing import LabelEncoder
+import joblib
 
 # Importing the dataset
 df = pd.read_csv('crop_yield.csv')
 
-df['Crop'] = df['Crop'].str.title()
-df['State'] = df['State'].str.title()
-df['Season'] = df['Season'].str.title()
+df['Crop'] = df['Crop'].str.title().str.strip()
+df['State'] = df['State'].str.title().str.strip()
+df['Season'] = df['Season'].str.title().str.strip()
+
+# Print unique values in categorical columns
+print("\nUnique values in categorical columns:")
+for col in ['Crop', 'State', 'Season']:
+    print(f"\n{col}:", df[col].unique())
 
 pd.options.display.float_format = '{:.2f}'.format
 df.describe(include=["int64","float64"]).T
 
-
 df_copy = df.copy()
 df_copy = df_copy.drop(['Area', 'Production'], axis=1)
 
+# Initialize label encoders for categorical columns
+label_encoders = {}
+category_columns = df_copy.select_dtypes(include=['object']).columns
 
-category_columns = df_copy.select_dtypes(include=['object']).columns # select object type columns
+# Apply label encoding to categorical columns
+for column in category_columns:
+    label_encoders[column] = LabelEncoder()
+    df_copy[column] = label_encoders[column].fit_transform(df_copy[column])
 
-df_copy = pd.get_dummies(df_copy, columns = category_columns, drop_first=True) # one hot encoding
+# Save label encoders for future use
+joblib.dump(label_encoders, 'label_encoders.pkl')
 
-boolean_cols_auto = df_copy.select_dtypes(include=['bool']).columns
-df_copy[boolean_cols_auto] = df_copy[boolean_cols_auto].astype(int) # convert boolean to int
-
-
-x = df_copy.drop(['Yield'], axis = 1)
+x = df_copy.drop(['Yield'], axis=1)
 y = df_copy['Yield']
+
+# Store column order for prediction
+feature_columns = x.columns.tolist()
 
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
 
@@ -94,14 +104,22 @@ def evaluate_model_performance(model, x_train, y_train, x_test, y_test):
     print(f"Training Data: R² = {train_r2:.2f}%, Adjusted R² = {train_adj_r2:.2f}%, RMSE = {train_rmse:.4f}")
     print(f"Testing Data : R² = {test_r2:.2f}%, Adjusted R² = {test_adj_r2:.2f}%, RMSE = {test_rmse:.4f}\n")
 
+# List of models to try
+model_list = [
+    LinearRegression(),
+    RandomForestRegressor(n_estimators=100, random_state=42),
+    GradientBoostingRegressor(n_estimators=100, random_state=42)
+]
 
-evaluate_model_performance(
-    model=LinearRegression(),
-    x_train=x_train,
-    y_train=y_train,
-    x_test=x_test,
-    y_test=y_test
-)
+# Train and evaluate each model
+for model in model_list:
+    evaluate_model_performance(
+        model=model,
+        x_train=x_train,
+        y_train=y_train,
+        x_test=x_test,
+        y_test=y_test
+    )
 
 df_model = pd.DataFrame(
         {"Algorithms": models,
@@ -116,6 +134,15 @@ df_model = pd.DataFrame(
 df_model_sort = df_model.sort_values(by="Testing Score R2", ascending=False)
 print(df_model_sort)
 
+# Use the best performing model (highest Testing Score R2)
+best_model_name = df_model_sort.iloc[0]['Algorithms']
+print(f"Best model: {best_model_name}")
+
+# Get the best model instance from the models you evaluated
+best_model_idx = models.index(best_model_name)
+best_models = [m for i, m in enumerate(model_list) if models[i] == best_model_name]
+final_model = best_models[0] if best_models else model_list[0]  # Fallback to first model if not found
+
 ax = df_model_sort.plot(
     x="Algorithms",
     y=["Training Score R2","Testing Score R2"],
@@ -126,102 +153,127 @@ ax = df_model_sort.plot(
 )
 
 # Save the trained model for predictions
-final_model = LinearRegression()
 final_model.fit(x_train, y_train)
 
-def predict_yield(model, new_data):
+# For tree-based models like RandomForest, show feature importance
+if hasattr(final_model, 'feature_importances_'):
+    feature_importances = pd.DataFrame({
+        'Feature': x.columns,
+        'Importance': final_model.feature_importances_
+    })
+    print("\nFeature Importance:")
+    print(feature_importances.sort_values('Importance', ascending=False).head(10))
+
+def predict_yield(model, new_data, show_debug=True):
     """
-    Makes yield predictions for new data using the trained model.
-    
-    Parameters:
-    - model: Trained model
-    - new_data: DataFrame with same features as training data (before encoding)
-    
-    Returns:
-    - Predicted yield values
+    Makes yield predictions using label encoding instead of one-hot encoding.
     """
-    # Preprocess the new data the same way as training data
-    # Drop Area and Production if they exist
-    if 'Area' in new_data.columns:
-        new_data = new_data.drop(['Area'], axis=1)
-    if 'Production' in new_data.columns:
-        new_data = new_data.drop(['Production'], axis=1)
+    # Load label encoders
+    label_encoders = joblib.load('label_encoders.pkl')
     
-    # Convert string columns to title case to match training data
+    # Preprocess the new data
     for col in new_data.select_dtypes(include=['object']).columns:
-        new_data[col] = new_data[col].str.title()
+        new_data[col] = new_data[col].str.title().str.strip()
+        
+    if show_debug:
+        print("\nInput data:")
+        print(new_data)
+        
+    # Apply label encoding to categorical columns
+    for column in new_data.columns:
+        if column in label_encoders:
+            try:
+                new_data[column] = label_encoders[column].transform(new_data[column])
+            except ValueError as e:
+                print(f"Error encoding {column}: {e}")
+                print(f"Valid values for {column}: {list(label_encoders[column].classes_)}")
+                raise
     
-    # Perform one-hot encoding on categorical variables
-    cat_cols = new_data.select_dtypes(include=['object']).columns
-    new_data_encoded = pd.get_dummies(new_data, columns=cat_cols, drop_first=True)
+    if show_debug:
+        print("\nEncoded data:")
+        print(new_data)
     
-    # Make sure columns match training data
-    missing_cols = set(x.columns) - set(new_data_encoded.columns)
-    for col in missing_cols:
-        new_data_encoded[col] = 0
+    # Ensure columns are in the same order as training data
+    new_data = new_data[feature_columns]
     
-    # Ensure the column order matches
-    new_data_encoded = new_data_encoded[x.columns]
+    # Make prediction
+    predictions = model.predict(new_data)
     
-    # Make predictions
-    predictions = model.predict(new_data_encoded)
     return predictions
 
-# Example usage:
-# Create a sample input for prediction
-sample_data = pd.DataFrame({
+# Example usage: prediction for different crop combinations
+print("\nPrediction Examples:")
+
+# Get median values for numeric columns
+median_values = {
+    'Crop_Year': df['Crop_Year'].median(),
+    'Annual_Rainfall': df['Annual_Rainfall'].median(),
+    'Fertilizer': df['Fertilizer'].median() if 'Fertilizer' in df else 0,
+    'Pesticide': df['Pesticide'].median() if 'Pesticide' in df else 0
+}
+
+# Example 1: Rice in Karnataka during Kharif season
+sample1 = pd.DataFrame({
     'Crop': ['Rice'],
-    'State': ['Punjab'],
+    'State': ['Karnataka'],
     'Season': ['Kharif'],
-    # Add other required features
+    'Crop_Year': [median_values['Crop_Year']],
+    'Annual_Rainfall': [median_values['Annual_Rainfall']],
+    'Fertilizer': [median_values['Fertilizer']],
+    'Pesticide': [median_values['Pesticide']]
 })
+pred1 = predict_yield(final_model, sample1)
+print(f"Rice, Karnataka, Kharif: {pred1[0]:.2f}")
 
-# Make prediction
-predicted_yield = predict_yield(final_model, sample_data)
-print(f"Predicted crop yield: {predicted_yield[0]:.2f}")
-
-# First, let's examine what columns the model expects
-print("Features the model was trained on:", x.columns.tolist())
-print("Number of features:", len(x.columns))
-
-# Create a more complete sample input
-# Get a list of the original categorical columns before encoding
-original_cat_columns = df.select_dtypes(include=['object']).columns
-original_cat_columns = [col for col in original_cat_columns if col not in ['Area', 'Production', 'Yield']]
-
-# Get a list of the numerical columns
-numerical_columns = df.select_dtypes(include=['int64', 'float64']).columns
-numerical_columns = [col for col in numerical_columns if col not in ['Area', 'Production', 'Yield']]
-
-# Fix: Remove .tolist() as these variables are already lists
-print("Original categorical columns:", original_cat_columns)
-print("Original numerical columns:", numerical_columns)
-
-# Create a more complete sample input with reasonable values
-sample_data = pd.DataFrame({
-    'Crop': ['Rice'],
+# Example 2: Wheat in Punjab during Rabi season
+sample2 = pd.DataFrame({
+    'Crop': ['Wheat'],
     'State': ['Punjab'],
-    'Season': ['Kharif'],
+    'Season': ['Rabi'],
+    'Crop_Year': [median_values['Crop_Year']],
+    'Annual_Rainfall': [median_values['Annual_Rainfall']],
+    'Fertilizer': [median_values['Fertilizer']],
+    'Pesticide': [median_values['Pesticide']]
 })
+pred2 = predict_yield(final_model, sample2)
+print(f"Wheat, Punjab, Rabi: {pred2[0]:.2f}")
 
-# Add any missing numeric columns with reasonable values
-# Use median values from the training data for numeric columns
-for col in numerical_columns:
-    if col not in sample_data.columns:
-        sample_data[col] = df[col].median()
+# Example 3: Maize in Gujarat during Summer season
+sample3 = pd.DataFrame({
+    'Crop': ['Maize'], 
+    'State': ['Gujarat'],
+    'Season': ['Summer'],
+    'Crop_Year': [median_values['Crop_Year']],
+    'Annual_Rainfall': [median_values['Annual_Rainfall']],
+    'Fertilizer': [median_values['Fertilizer']],
+    'Pesticide': [median_values['Pesticide']]
+})
+pred3 = predict_yield(final_model, sample3)
+print(f"Maize, Gujarat, Summer: {pred3[0]:.2f}")
 
-# Make prediction with improved data
-predicted_yield = predict_yield(final_model, sample_data)
+# Function for interactive predictions
+def interactive_prediction():
+    print("\n=== Crop Yield Prediction ===")
+    crop = input("Enter crop name: ")
+    state = input("Enter state name: ")
+    season = input("Enter season: ")
+    
+    input_data = pd.DataFrame({
+        'Crop': [crop],
+        'State': [state],
+        'Season': [season],
+        'Crop_Year': [median_values['Crop_Year']],
+        'Annual_Rainfall': [median_values['Annual_Rainfall']],
+        'Fertilizer': [median_values['Fertilizer']],
+        'Pesticide': [median_values['Pesticide']]
+    })
+    
+    try:
+        prediction = predict_yield(final_model, input_data)
+        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f}")
+    except Exception as e:
+        print(f"Error making prediction: {e}")
+        print("Please check your input and try again.")
 
-# Apply validation to ensure prediction is reasonable
-if predicted_yield[0] < 0:
-    print(f"Warning: Model predicted negative yield ({predicted_yield[0]:.2f}). Using 0 instead.")
-    predicted_yield[0] = 0
-
-print(f"Predicted crop yield: {predicted_yield[0]:.2f}")
-
-# Optional: Save the trained model for future use
-import pickle
-with open('crop_yield_model.pkl', 'wb') as f:
-    pickle.dump(final_model, f)
-print("Model saved as 'crop_yield_model.pkl'")
+# Uncomment to use interactive predictions
+# interactive_prediction()
