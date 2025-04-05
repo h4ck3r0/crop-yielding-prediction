@@ -275,5 +275,3 @@ def interactive_prediction():
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
 
-# Uncomment to use interactive predictions
-# interactive_prediction()
