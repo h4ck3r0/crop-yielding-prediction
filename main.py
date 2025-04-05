@@ -23,6 +23,7 @@ for col in ['Crop', 'State', 'Season']:
 
 pd.options.display.float_format = '{:.2f}'.format
 df.describe(include=["int64","float64"]).T
+print(df['Yield'].describe())
 
 df_copy = df.copy()
 df_copy = df_copy.drop(['Area', 'Production'], axis=1)
@@ -203,46 +204,7 @@ median_values = {
     'Pesticide': df['Pesticide'].median() if 'Pesticide' in df else 0
 }
 
-# Example 1: Rice in Karnataka during Kharif season
-sample1 = pd.DataFrame({
-    'Crop': ['Rice'],
-    'State': ['Karnataka'],
-    'Season': ['Kharif'],
-    'Crop_Year': [median_values['Crop_Year']],
-    'Annual_Rainfall': [median_values['Annual_Rainfall']],
-    'Fertilizer': [median_values['Fertilizer']],
-    'Pesticide': [median_values['Pesticide']]
-})
-pred1 = predict_yield(final_model, sample1)
-print(f"Rice, Karnataka, Kharif: {pred1[0]:.2f}")
 
-# Example 2: Wheat in Punjab during Rabi season
-sample2 = pd.DataFrame({
-    'Crop': ['Wheat'],
-    'State': ['Punjab'],
-    'Season': ['Rabi'],
-    'Crop_Year': [median_values['Crop_Year']],
-    'Annual_Rainfall': [median_values['Annual_Rainfall']],
-    'Fertilizer': [median_values['Fertilizer']],
-    'Pesticide': [median_values['Pesticide']]
-})
-pred2 = predict_yield(final_model, sample2)
-print(f"Wheat, Punjab, Rabi: {pred2[0]:.2f}")
-
-# Example 3: Maize in Gujarat during Summer season
-sample3 = pd.DataFrame({
-    'Crop': ['Maize'], 
-    'State': ['Gujarat'],
-    'Season': ['Summer'],
-    'Crop_Year': [median_values['Crop_Year']],
-    'Annual_Rainfall': [median_values['Annual_Rainfall']],
-    'Fertilizer': [median_values['Fertilizer']],
-    'Pesticide': [median_values['Pesticide']]
-})
-pred3 = predict_yield(final_model, sample3)
-print(f"Maize, Gujarat, Summer: {pred3[0]:.2f}")
-
-# Function for interactive predictions
 def interactive_prediction():
     print("\n=== Crop Yield Prediction ===")
     crop = input("Enter crop name: ")
@@ -261,8 +223,13 @@ def interactive_prediction():
     
     try:
         prediction = predict_yield(final_model, input_data)
-        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f}")
+        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} Metric Ton Per Unit Area")
     except Exception as e:
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
+
+
+interactive_prediction()
+
+
 
