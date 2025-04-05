@@ -57,16 +57,7 @@ testing_scores_adj_r2 = []
 testing_scores_rmse = []
 
 def evaluate_model_performance(model, x_train, y_train, x_test, y_test):
-    """
-    Evaluates R², Adjusted R², and RMSE of a given model on training and testing data.
-    
-    Parameters:
-    - model: The machine learning model to evaluate
-    - x_train: Training feature set
-    - y_train: Training target values
-    - x_test: Testing feature set
-    - y_test: Testing target values
-    """
+   
     # Add model to the models list
     models.append(model.__class__.__name__)
     
