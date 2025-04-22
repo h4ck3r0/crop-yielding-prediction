@@ -228,7 +228,7 @@ def interactive_prediction():
 
     try:
         prediction = predict_yield(final_model, input_data)
-        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} Metric Ton Per Unit Area")
+        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} metric ton per hectare")
 
     except Exception as e:
         print(f"Error making prediction: {e}")
