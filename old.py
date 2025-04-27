@@ -194,8 +194,12 @@ def predict_yield(model, new_data, show_debug=True):
         return None
 
 
-# Make prediction
-prediction = predict_yield(final_model, input_data)
+
+# Save the best model to disk
+joblib.dump(final_model, 'best_model.pkl')
+# Load the model from disk for future predictions
+final_model = joblib.load('best_model.pkl')
+
 
 # Example usage: prediction for different crop combinations
 print("\nPrediction Examples:")
@@ -225,6 +229,9 @@ def interactive_prediction():
         'Fertilizer': [median_values['Fertilizer']],
         'Pesticide': [median_values['Pesticide']]
     })
+    # Make prediction
+    prediction = predict_yield(final_model, input_data)
+
 
     try:
         prediction = predict_yield(final_model, input_data)
@@ -234,5 +241,5 @@ def interactive_prediction():
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
 
-
 interactive_prediction()
+2
