@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Yield Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2e3b4e;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            margin: auto;
+        }
+        label {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .prediction {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crop Yield Prediction</h1>
+    <form action="/predict" method="post">
+        <label for="crop">Crop Name:</label>
+        <input type="text" id="crop" name="crop" required><br><br>
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state" required><br><br>
+        <label for="season">Season:</label>
+        <input type="text" id="season" name="season" required><br><br>
+        <button type="submit">Predict</button>
+    </form>
+    
+    {% if prediction %}
+        <div class="prediction">{{ prediction }}</div>
+    {% endif %}
+</body>
+</html>
