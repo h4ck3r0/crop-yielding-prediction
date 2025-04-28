@@ -194,9 +194,10 @@ def predict_yield(model, new_data, show_debug=True):
 
 
 # Save the best model to disk
-joblib.dump(final_model, 'best_model.pkl')
+joblib.dump((final_model, feature_columns), 'best_model.pkl')
+
 # Load the model from disk for future predictions
-final_model = joblib.load('best_model.pkl')
+final_model, feature_columns = joblib.load('best_model.pkl')
 
 
 # Example usage: prediction for different crop combinations
@@ -210,13 +211,11 @@ median_values = {
     'Pesticide': df['Pesticide'].median() if 'Pesticide' in df else 0
 }
 
-
 def interactive_prediction():
     print("\n=== Crop Yield Prediction ===")
-    crop = input("Enter crop name: ")
-
-    state = input("Enter state name: ")
-    season = input("Enter season: ")
+    crop = input("Enter crop name: ").title().strip()
+    state = input("Enter state name: ").title().strip()
+    season = input("Enter season: ").title().strip()
 
     input_data = pd.DataFrame({
         'Crop': [crop],
@@ -227,16 +226,30 @@ def interactive_prediction():
         'Fertilizer': [median_values['Fertilizer']],
         'Pesticide': [median_values['Pesticide']]
     })
+
+    # Load encoders
+    label_encoders = joblib.load('label_encoders.pkl')
+
+    # Apply label encoding
+    for col in ['Crop', 'State', 'Season']:
+        if col in input_data.columns:
+            le = label_encoders.get(col)
+            if le:
+                try:
+                    input_data[col] = le.transform(input_data[col])
+                except ValueError:
+                    print(f"Error: '{input_data[col][0]}' not found in training data for column '{col}'.")
+                    return
+
+    # Reorder columns to match the training order
+    input_data = input_data[feature_columns]
+
     # Make prediction
-    prediction = predict_yield(final_model, input_data)
-
-
     try:
-        prediction = predict_yield(final_model, input_data)
-        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} metric ton per hectare")
-
+        prediction = predict_yield(final_model, input_data, show_debug=False)
+        if prediction is not None:
+            print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} metric ton per hectare")
     except Exception as e:
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
 
-interactive_prediction()
