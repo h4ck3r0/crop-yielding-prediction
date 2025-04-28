@@ -62,6 +62,7 @@ y = df_copy['Yield']
 
 # Store column order for prediction
 feature_columns = x.columns.tolist()
+joblib.dump(feature_columns, 'feature_columns.pkl')
 
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
 
@@ -215,10 +216,26 @@ median_values = {
 
 def interactive_prediction():
     print("\n=== Crop Yield Prediction ===")
-    crop = input("Enter crop name: ")
-
-    state = input("Enter state name: ")
-    season = input("Enter season: ")
+    
+    print("\nAvailable Crops:")
+    available_crops = sorted(df['Crop'].unique())
+    for i, crop in enumerate(available_crops, 1):
+        print(f"{i}. {crop}")
+    
+    print("\nAvailable States:")
+    available_states = sorted(df['State'].unique())
+    for i, state in enumerate(available_states, 1):
+        print(f"{i}. {state}")
+    
+    print("\nAvailable Seasons:")
+    available_seasons = sorted(df['Season'].unique())
+    for i, season in enumerate(available_seasons, 1):
+        print(f"{i}. {season}")
+    
+    print("\nEnter your choices:")
+    crop = input("Enter crop name (exactly as shown above): ")
+    state = input("Enter state name (exactly as shown above): ")
+    season = input("Enter season (exactly as shown above): ")
 
     input_data = pd.DataFrame({
         'Crop': [crop],
@@ -229,17 +246,26 @@ def interactive_prediction():
         'Fertilizer': [median_values['Fertilizer']],
         'Pesticide': [median_values['Pesticide']]
     })
-    # Make prediction
-    prediction = predict_yield(final_model, input_data)
-
-
     try:
+        # Apply label encoding
+        for column, encoder in label_encoders.items():
+            if column in input_data.columns:
+                try:
+                    input_data[column] = encoder.transform(input_data[column])
+                except ValueError as e:
+                    print(f"Invalid value for {column}. Please select from available options.")
+                    return
+        
+        # Load feature columns and reorder input data
+        feature_columns = joblib.load('feature_columns.pkl')
+        input_data = input_data[feature_columns]
+        
+        # Make prediction
         prediction = predict_yield(final_model, input_data)
-        print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} metric ton per hectare")
-
+        if prediction is not None:
+            print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} metric ton per hectare")
     except Exception as e:
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
 
 interactive_prediction()
-2

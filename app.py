@@ -1,60 +1,30 @@
+from flask import Flask, render_template, request
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.preprocessing import LabelEncoder
 import joblib
+import os
+from sklearn.preprocessing import LabelEncoder
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Load dataset and model
+# Load model data, label encoders and unique values
+model_data = joblib.load('best_model.pkl')
+label_encoders = joblib.load('label_encoders.pkl')
+try:
+    unique_values = joblib.load('unique_values.pkl')
+except:
+    # Fallback to generating unique values from the dataset if file doesn't exist
+    unique_values = {
+        'crops': sorted(df['Crop'].unique().tolist()),
+        'states': sorted(df['State'].unique().tolist()),
+        'seasons': sorted(df['Season'].unique().tolist())
+    }
+
+# Load dataset for median values and column information
 df = pd.read_csv('crop_yield.csv')
-df['Crop'] = df['Crop'].str.title().str.strip()
-df['State'] = df['State'].str.title().str.strip()
-df['Season'] = df['Season'].str.title().str.strip()
-df['Fertilizer'] = np.log1p(df['Fertilizer'])
-df['Pesticide'] = np.log1p(df['Pesticide'])
-df['Annual_Rainfall'] = np.log1p(df['Annual_Rainfall'])
 
-# Preprocessing
-df_copy = df.copy()
-df_copy = df_copy.drop(['Area', 'Production'], axis=1)
-label_encoders = {}
-category_columns = df_copy.select_dtypes(include=['object']).columns
-
-for column in category_columns:
-    label_encoders[column] = LabelEncoder()
-    df_copy[column] = label_encoders[column].fit_transform(df_copy[column])
-
-# Save the label encoders
-joblib.dump(label_encoders, 'label_encoders.pkl')
-
-# Features and target
-x = df_copy.drop(['Yield'], axis=1)
-y = df_copy['Yield']
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-# Train models and choose the best one
-models = [LinearRegression(), RandomForestRegressor(n_estimators=100, random_state=42), GradientBoostingRegressor(n_estimators=100, random_state=42)]
-best_model = None
-best_r2 = -np.inf
-
-for model in models:
-    model.fit(x_train, y_train)
-    y_pred = model.predict(x_test)
-    r2 = r2_score(y_test, y_pred)
-    if r2 > best_r2:
-        best_model = model
-        best_r2 = r2
-
-# Save the best model
-joblib.dump(best_model, 'best_model.pkl')
-
-# Median values for prediction
+# Get median values for numeric columns
 median_values = {
     'Crop_Year': df['Crop_Year'].median(),
     'Annual_Rainfall': df['Annual_Rainfall'].median(),
@@ -62,36 +32,101 @@ median_values = {
     'Pesticide': df['Pesticide'].median() if 'Pesticide' in df else 0
 }
 
-# Define prediction function
-def predict_yield(model, crop, state, season):
-    input_data = pd.DataFrame({
-        'Crop': [crop],
-        'State': [state],
-        'Season': [season],
-        'Crop_Year': [median_values['Crop_Year']],
-        'Annual_Rainfall': [median_values['Annual_Rainfall']],
-        'Fertilizer': [median_values['Fertilizer']],
-        'Pesticide': [median_values['Pesticide']]
-    })
-    return model.predict(input_data)[0]
 
+# Define route for home page (input form)
 @app.route('/')
-def index():
-    return render_template('index.html')
+def home():
+    try:
+        return render_template('index.html',
+                           crops=unique_values['crops'],
+                           states=unique_values['states'],
+                           seasons=unique_values['seasons'])
+    except Exception as e:
+        return render_template('index.html', error=f"Error loading options: {str(e)}")
 
+# Define route for prediction
 @app.route('/predict', methods=['POST'])
 def predict():
-    crop = request.form['crop']
-    state = request.form['state']
-    season = request.form['season']
-    
     try:
-        # Load the best model
-        best_model = joblib.load('best_model.pkl')
-        prediction = predict_yield(best_model, crop, state, season)
-        return render_template('index.html', prediction=f"Predicted yield for {crop} in {state} during {season} season: {prediction:.2f} metric ton per hectare")
-    except Exception as e:
-        return render_template('index.html', prediction=f"Error: {e}")
+        # Get user input from form
+        crop = request.form.get('crop')
+        state = request.form.get('state')
+        season = request.form.get('season')
 
+        if not all([crop, state, season]):
+            raise ValueError("Please fill in all fields")
+        
+        if crop not in df['Crop'].unique():
+            raise ValueError(f"Invalid crop selection. Please choose from available options.")
+        if state not in df['State'].unique():
+            raise ValueError(f"Invalid state selection. Please choose from available options.")
+        if season not in df['Season'].unique():
+            raise ValueError(f"Invalid season selection. Please choose from available options.")
+
+        # Prepare input data
+        input_data = pd.DataFrame({
+            'Crop': [crop],
+            'State': [state],
+            'Season': [season],
+            'Crop_Year': [median_values['Crop_Year']],
+            'Annual_Rainfall': [median_values['Annual_Rainfall']],
+            'Fertilizer': [median_values['Fertilizer']],
+            'Pesticide': [median_values['Pesticide']]
+        })
+
+        # Apply label encoding
+        try:
+            for column, encoder in label_encoders.items():
+                if column in input_data.columns:
+                    input_data[column] = encoder.transform(input_data[column])
+        except ValueError:
+            raise ValueError(f"Invalid input values. Please select from the available options.")
+
+        # Reorder columns to match training data
+        input_data = input_data[model_data['feature_names']]
+
+        # Make prediction
+        prediction = model_data['model'].predict(input_data)
+        pred_value = prediction[0] if isinstance(prediction, np.ndarray) else prediction
+
+        # Format prediction and handle any potential float conversion issues
+        try:
+            prediction_text = f"Predicted yield for {crop} in {state} during {season} season: {float(pred_value):.2f} metric ton per hectare"
+        except:
+            prediction_text = f"Predicted yield for {crop} in {state} during {season} season: {pred_value} metric ton per hectare"
+
+        return render_template('index.html',
+                           prediction=prediction_text,
+                           crops=unique_values['crops'],
+                           states=unique_values['states'],
+                           seasons=unique_values['seasons'])
+
+    except ValueError as e:
+        # Handle validation errors
+        return render_template('index.html',
+                           error=str(e),
+                           crops=unique_values['crops'],
+                           states=unique_values['states'],
+                           seasons=unique_values['seasons'])
+    except Exception as e:
+        # Log unexpected errors
+        print(f"Unexpected error in prediction: {str(e)}")
+        return render_template('index.html',
+                           error="An unexpected error occurred. Please try again.",
+                           crops=unique_values['crops'],
+                           states=unique_values['states'],
+                           seasons=unique_values['seasons'])
+
+# Run the Flask app
 if __name__ == '__main__':
+    # Check if required files exist and if static directory exists
+    required_files = ['best_model.pkl', 'label_encoders.pkl', 'median_values.pkl', 'unique_values.pkl']
+    if not all(os.path.exists(f) for f in required_files):
+        print("Error: Required model files are missing. Please train the model first using old.py")
+        exit(1)
+
+    # Create static directory if it doesn't exist
+    if not os.path.exists('static'):
+        os.makedirs('static')
+
     app.run(debug=True)
