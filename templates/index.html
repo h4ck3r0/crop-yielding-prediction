@@ -4,155 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crop Yield Prediction</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #2e3b4e;
-        }
-        form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            margin: auto;
-        }
-        label {
-            font-size: 1.1em;
-            margin-bottom: 5px;
-            display: block;
-        }
-        select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1.2em;
-            cursor: pointer;
-            width: 100%;
-            border-radius: 4px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .message {
-            font-size: 1.2em;
-            text-align: center;
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .prediction {
-            color: #2e3b4e;
-            background-color: #e8f5e9;
-        }
-        .error {
-            color: #721c24;
-            background-color: #f8d7da;
-        }
-        .visualizations {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 30px;
-            gap: 20px;
-        }
-        .visualization-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-        }
-        .visualization-container h2 {
-            color: #2e3b4e;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .visualization-container img {
-            max-width: 100%;
-            height: auto;
-        }
+        body { background-color: #f4f4f4; }
+        .container { margin-top: 50px; }
+        .card { margin-top: 20px; }
+        .btn-primary { width: 100%; }
     </style>
 </head>
 <body>
-    <h1>Crop Yield Prediction</h1>
-    
-    {% if model_trained %}
-    <div class="visualizations">
-        <div class="visualization-container">
-            <h2>Model Performance Comparison</h2>
-            <img src="{{ url_for('static', filename='model_performance.png') }}" alt="Model Performance Comparison">
-        </div>
-        {% if has_feature_importance %}
-        <div class="visualization-container">
-            <h2>Feature Importance</h2>
-            <img src="{{ url_for('static', filename='feature_importance.png') }}" alt="Feature Importance">
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-    <form action="/predict" method="post">
-        <label for="crop">Crop Name:</label>
-        <select id="crop" name="crop" required>
-            <option value="">Select a crop</option>
-            {% for crop in crops %}
-            <option value="{{ crop }}">{{ crop }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="state">State:</label>
-        <select id="state" name="state" required>
-            <option value="">Select a state</option>
-            {% for state in states %}
-            <option value="{{ state }}">{{ state }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="season">Season:</label>
-        <select id="season" name="season" required>
-            <option value="">Select a season</option>
-            {% for season in seasons %}
-            <option value="{{ season }}">{{ season }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">Predict</button>
-    </form>
-    
-    {% if prediction %}
-        <div class="message prediction">
-            {{ prediction }}
-            {% if metrics %}
-            <div style="margin-top: 15px; font-size: 0.9em;">
-                <p>Model Performance Metrics:</p>
-                <ul style="text-align: left;">
-                    <li>R² Score: {{ metrics.r2_score|round(4) }}</li>
-                    <li>Adjusted R²: {{ metrics.adj_r2|round(4) }}</li>
-                    <li>RMSE: {{ metrics.rmse|round(4) }}</li>
-                </ul>
+    <div class="container">
+        <h1 class="text-center">Crop Yield Prediction</h1>
+        <form action="/predict" method="POST">
+            <div class="form-group">
+                <label for="crop">Crop Name</label>
+                <input type="text" name="crop" class="form-control" placeholder="Enter Crop Name" required>
             </div>
-            {% endif %}
-        </div>
-    {% endif %}
-
-    {% if error %}
-        <div class="message error">{{ error }}</div>
-    {% endif %}
+            <div class="form-group">
+                <label for="state">State Name</label>
+                <input type="text" name="state" class="form-control" placeholder="Enter State Name" required>
+            </div>
+            <div class="form-group">
+                <label for="season">Season</label>
+                <input type="text" name="season" class="form-control" placeholder="Enter Season" required>
+            </div>
+            <div class="form-group">
+                <label for="year">Crop Year (Optional)</label>
+                <input type="number" name="year" class="form-control" min="2000" max="2025" placeholder="Enter Year">
+            </div>
+            <div class="form-group">
+                <label for="rainfall">Annual Rainfall (Optional)</label>
+                <input type="number" name="rainfall" class="form-control" min="0" placeholder="Enter Annual Rainfall">
+            </div>
+            <div class="form-group">
+                <label for="fertilizer">Fertilizer Use (Optional)</label>
+                <input type="number" name="fertilizer" class="form-control" min="0" placeholder="Enter Fertilizer Use">
+            </div>
+            <div class="form-group">
+                <label for="pesticide">Pesticide Use (Optional)</label>
+                <input type="number" name="pesticide" class="form-control" min="0" placeholder="Enter Pesticide Use">
+            </div>
+            <button type="submit" class="btn btn-primary">Predict Yield</button>
+        </form>
+    </div>
 </body>
 </html>

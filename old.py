@@ -15,14 +15,6 @@ df = pd.read_csv('crop_yield.csv')
 df['Crop'] = df['Crop'].str.title().str.strip()
 df['State'] = df['State'].str.title().str.strip()
 df['Season'] = df['Season'].str.title().str.strip()
-df['Fertilizer'] = np.log1p(df['Fertilizer'])
-df['Pesticide'] = np.log1p(df['Pesticide'])
-df['Annual_Rainfall'] = np.log1p(df['Annual_Rainfall'])
-
-
-
-
-
 
 # Print unique values in categorical columns
 print("\nUnique values in categorical columns:")
@@ -62,11 +54,6 @@ y = df_copy['Yield']
 feature_columns = x.columns.tolist()
 
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
-
-
-
-
-
 
 
 # Initialize lists to store model performance metrics
@@ -191,6 +178,7 @@ def predict_yield(model, new_data, show_debug=True):
         print(f"Error making prediction: {e}")
         return None
 
+final_model = model_list[df_model_sort.index[0]]
 
 
 # Save the best model to disk
@@ -200,8 +188,6 @@ joblib.dump((final_model, feature_columns), 'best_model.pkl')
 final_model, feature_columns = joblib.load('best_model.pkl')
 
 
-# Example usage: prediction for different crop combinations
-print("\nPrediction Examples:")
 
 # Get median values for numeric columns
 median_values = {
@@ -213,43 +199,68 @@ median_values = {
 
 def interactive_prediction():
     print("\n=== Crop Yield Prediction ===")
-    crop = input("Enter crop name: ").title().strip()
-    state = input("Enter state name: ").title().strip()
-    season = input("Enter season: ").title().strip()
+    print("Type 'exit' at any prompt to cancel prediction\n")
 
-    input_data = pd.DataFrame({
-        'Crop': [crop],
-        'State': [state],
-        'Season': [season],
-        'Crop_Year': [median_values['Crop_Year']],
-        'Annual_Rainfall': [median_values['Annual_Rainfall']],
-        'Fertilizer': [median_values['Fertilizer']],
-        'Pesticide': [median_values['Pesticide']]
-    })
-
-    # Load encoders
+    # Load label encoders
     label_encoders = joblib.load('label_encoders.pkl')
 
-    # Apply label encoding
-    for col in ['Crop', 'State', 'Season']:
-        if col in input_data.columns:
-            le = label_encoders.get(col)
-            if le:
-                try:
-                    input_data[col] = le.transform(input_data[col])
-                except ValueError:
-                    print(f"Error: '{input_data[col][0]}' not found in training data for column '{col}'.")
-                    return
+    # Get available options for categorical columns
+    available_crops = label_encoders['Crop'].classes_
+    available_states = label_encoders['State'].classes_
+    available_seasons = label_encoders['Season'].classes_
 
-    # Reorder columns to match the training order
-    input_data = input_data[feature_columns]
+    def get_valid_input(prompt, options):
+        while True:
+            print(f"\nAvailable options: {', '.join(sorted(options))}")
+            value = input(prompt).title().strip()
+            if value.lower() == 'exit':
+                return None
+            if value in options:
+                return value
+            print(f"Invalid input. Please choose from the available options.")
+
+    # Get categorical inputs with validation
+    crop = get_valid_input("Enter crop name: ", available_crops)
+    if crop is None:
+        return
+
+    state = get_valid_input("Enter state name: ", available_states)
+    if state is None:
+        return
+
+    season = get_valid_input("Enter season: ", available_seasons)
+    if season is None:
+        return
+
+    # Create a dictionary with features in the correct order
+    input_dict = {}
+    for col in feature_columns:
+        if col == 'Crop':
+            input_dict[col] = [label_encoders['Crop'].transform([crop])[0]]
+        elif col == 'State':
+            input_dict[col] = [label_encoders['State'].transform([state])[0]]
+        elif col == 'Season':
+            input_dict[col] = [label_encoders['Season'].transform([season])[0]]
+        elif col == 'Crop_Year':
+            input_dict[col] = [median_values['Crop_Year']]
+        elif col == 'Annual_Rainfall':
+            input_dict[col] = [median_values['Annual_Rainfall']]
+        elif col == 'Fertilizer':
+            input_dict[col] = [median_values['Fertilizer']]
+        elif col == 'Pesticide':
+            input_dict[col] = [median_values['Pesticide']]
+
+    # Create DataFrame with exact column order
+    input_data = pd.DataFrame(input_dict)
 
     # Make prediction
     try:
         prediction = predict_yield(final_model, input_data, show_debug=False)
         if prediction is not None:
-            print(f"\nPredicted yield for {crop} in {state} during {season} season: {prediction[0]:.2f} metric ton per hectare")
+            print(f"\nPredicted yield for {crop} in {state} during {season} season:")
+            print(f"  {prediction[0]:.2f} metric ton per hectare")
     except Exception as e:
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
 
+interactive_prediction()
