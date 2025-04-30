@@ -49,12 +49,17 @@ def predict():
             raise ValueError("Please fill in all required fields.")
 
         # Validate selections
-        if crop not in df['Crop'].unique():
-            raise ValueError(f"Invalid crop selection.")
-        if state not in df['State'].unique():
-            raise ValueError(f"Invalid state selection.")
-        if season not in df['Season'].unique():
-            raise ValueError(f"Invalid season selection.")
+        # Clean and validate inputs
+        crop = crop.strip().title()
+        state = state.strip().title()
+        season = season.strip()
+
+        if crop not in unique_values['crops']:
+            raise ValueError(f"Invalid crop selection: {crop}")
+        if state not in unique_values['states']:
+            raise ValueError(f"Invalid state selection: {state}")
+        if season not in unique_values['seasons']:
+            raise ValueError(f"Invalid season selection: {season}")
 
         # Use optional values if provided, else fallback to median
         input_data = pd.DataFrame({
