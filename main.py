@@ -1,10 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.preprocessing import LabelEncoder
 import joblib
@@ -12,49 +10,41 @@ import joblib
 # Importing the dataset
 df = pd.read_csv('crop_yield.csv')
 
-df['Crop'] = df['Crop'].str.title().str.strip()
-df['State'] = df['State'].str.title().str.strip()
-df['Season'] = df['Season'].str.title().str.strip()
+# Cleaning the data
+for column in ['Crop', 'State', 'Season']:
+    df[column] = df[column].str.strip().str.title()
+
+# Compute the Yield as Production / Area
+df['Yield'] = df['Production'] / df['Area']
 
 # Print unique values in categorical columns
 print("\nUnique values in categorical columns:")
-for col in ['Crop', 'State', 'Season']:
-    print(f"\n{col}:", df[col].unique())
+for column in ['Crop', 'State', 'Season']:
+    print(f"\n{column}:", df[column].unique())
 
-pd.options.display.float_format = '{:.2f}'.format
-df.describe(include=["int64","float64"]).T
-print(df['Yield'].describe())
+# Define the feature columns and target
+feature_columns = ['Crop', 'State', 'Season', 'Crop_Year', 'Annual_Rainfall', 'Fertilizer', 'Pesticide']
+target_column = 'Yield'
 
-
-df_copy = df.copy()
-df_copy = df_copy.drop(['Area', 'Production'], axis=1)
+# Create a copy of the dataframe without NaN values in the target column (Yield)
+data = df.dropna(subset=[target_column])
 
 # Initialize label encoders for categorical columns
 label_encoders = {}
-category_columns = df_copy.select_dtypes(include=['object']).columns
-
-
-
-
-
-# Apply label encoding to categorical columns
-for column in category_columns:
-    label_encoders[column] = LabelEncoder()
-    df_copy[column] = label_encoders[column].fit_transform(df_copy[column])
-
-
+for column in ['Crop', 'State', 'Season']:
+    le = LabelEncoder()
+    data[column] = le.fit_transform(data[column])
+    label_encoders[column] = le
 
 # Save label encoders for future use
 joblib.dump(label_encoders, 'label_encoders.pkl')
 
-x = df_copy.drop(['Yield'], axis=1)
-y = df_copy['Yield']
+# Define features and target
+x = data[feature_columns]
+y = data[target_column]
 
-# Store column order for prediction
-feature_columns = x.columns.tolist()
-
-x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
-
+# Train-test split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
 # Initialize lists to store model performance metrics
 models = []
@@ -62,20 +52,15 @@ training_scores_r2 = []
 training_scores_adj_r2 = []
 training_scores_rmse = []
 testing_scores_r2 = []
-
 testing_scores_adj_r2 = []
-
 testing_scores_rmse = []
 
 def evaluate_model_performance(model, x_train, y_train, x_test, y_test):
-   
     # Add model to the models list
     models.append(model.__class__.__name__)
     
     # Fit the model
     model.fit(x_train, y_train)
-
-
 
     # Predictions for training and testing data
     y_train_pred = model.predict(x_train)
@@ -125,6 +110,7 @@ for model in model_list:
         y_test=y_test
     )
 
+# Prepare a DataFrame for model performance
 df_model = pd.DataFrame(
         {"Algorithms": models,
          "Training Score R2": training_scores_r2,
@@ -134,69 +120,23 @@ df_model = pd.DataFrame(
          "Testing Score Adjusted R2": testing_scores_adj_r2,
          "Testing Score RMSE": testing_scores_rmse,
         })
-                   
+
+# Sort models by Testing R² score
 df_model_sort = df_model.sort_values(by="Testing Score R2", ascending=False)
 print(df_model_sort)
 
-# Use the best performing model (highest Testing Score R2)
+# Get the best model
 best_model_name = df_model_sort.iloc[0]['Algorithms']
 print(f"Best model: {best_model_name}")
+final_model = next(m for m in model_list if m.__class__.__name__ == best_model_name)
 
-# Get the best model instance from the models you evaluated
-best_model_idx = models.index(best_model_name)
-best_models = [m for i, m in enumerate(model_list) if models[i] == best_model_name]
-final_model = best_models[0] if best_models else model_list[0]  # Fallback to first model if not found
-
-ax = df_model_sort.plot(
-    x="Algorithms",
-    y=["Training Score R2","Testing Score R2"],
-    kind="bar",
-    figsize=(15, 9),
-    colormap="Set3",
-    width=0.8
-)
-
-# Save the trained model for predictions
-final_model.fit(x_train, y_train)
-
-# For tree-based models like RandomForest, show feature importance
-if hasattr(final_model, 'feature_importances_'):
-    feature_importances = pd.DataFrame({
-        'Feature': x.columns,
-        'Importance': final_model.feature_importances_
-    })
-    print("\nFeature Importance:")
-    print(feature_importances.sort_values('Importance', ascending=False).head(10))
-
-def predict_yield(model, new_data, show_debug=True):
-    try:
-        predictions = model.predict(new_data)
-        if show_debug:
-            print(f"Debug: Making prediction for input data: {new_data}")
-        return predictions
-    except Exception as e:
-        print(f"Error making prediction: {e}")
-        return None
-
-final_model = model_list[df_model_sort.index[0]]
-
-
-# Save the best model to disk
+# Save the trained model for future predictions
 joblib.dump((final_model, feature_columns), 'best_model.pkl')
 
-# Load the model from disk for future predictions
-final_model, feature_columns = joblib.load('best_model.pkl')
+# Save the label encoders for future use
+joblib.dump(label_encoders, 'label_encoders.pkl')
 
-
-
-# Get median values for numeric columns
-median_values = {
-    'Crop_Year': df['Crop_Year'].median(),
-    'Annual_Rainfall': df['Annual_Rainfall'].median(),
-    'Fertilizer': df['Fertilizer'].median() if 'Fertilizer' in df else 0,
-    'Pesticide': df['Pesticide'].median() if 'Pesticide' in df else 0
-}
-
+# Interactive Prediction Function
 def interactive_prediction():
     print("\n=== Crop Yield Prediction ===")
     print("Type 'exit' at any prompt to cancel prediction\n")
@@ -242,20 +182,20 @@ def interactive_prediction():
         elif col == 'Season':
             input_dict[col] = [label_encoders['Season'].transform([season])[0]]
         elif col == 'Crop_Year':
-            input_dict[col] = [median_values['Crop_Year']]
+            input_dict[col] = [df['Crop_Year'].median()]
         elif col == 'Annual_Rainfall':
-            input_dict[col] = [median_values['Annual_Rainfall']]
+            input_dict[col] = [df['Annual_Rainfall'].median()]
         elif col == 'Fertilizer':
-            input_dict[col] = [median_values['Fertilizer']]
+            input_dict[col] = [df['Fertilizer'].median() if 'Fertilizer' in df else 0]
         elif col == 'Pesticide':
-            input_dict[col] = [median_values['Pesticide']]
+            input_dict[col] = [df['Pesticide'].median() if 'Pesticide' in df else 0]
 
     # Create DataFrame with exact column order
     input_data = pd.DataFrame(input_dict)
 
     # Make prediction
     try:
-        prediction = predict_yield(final_model, input_data, show_debug=False)
+        prediction = final_model.predict(input_data)
         if prediction is not None:
             print(f"\nPredicted yield for {crop} in {state} during {season} season:")
             print(f"  {prediction[0]:.2f} metric ton per hectare")
@@ -263,4 +203,5 @@ def interactive_prediction():
         print(f"Error making prediction: {e}")
         print("Please check your input and try again.")
 
+# Call interactive prediction
 interactive_prediction()
