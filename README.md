@@ -22,6 +22,11 @@ To run this project locally, you'll need to have Python 3.x installed. Additiona
 - joblib
 - Bootstrap (for frontend styling)
 
+  
+## Training Progress
+
+![training_progress](training_progress.png)
+
 ## Installation
 
 Follow the steps below to get the project running on your local machine.
