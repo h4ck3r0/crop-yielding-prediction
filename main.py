@@ -11,8 +11,12 @@ import joblib
 df = pd.read_csv('crop_yield.csv')
 
 # Cleaning the data
-for column in ['Crop', 'State', 'Season']:
+# Clean the data - strip whitespace and standardize case
+for column in ['Crop', 'State']:
     df[column] = df[column].str.strip().str.title()
+
+# Special handling for Season to remove extra whitespace
+df['Season'] = df['Season'].str.strip()
 
 # Compute the Yield as Production / Area
 df['Yield'] = df['Production'] / df['Area']

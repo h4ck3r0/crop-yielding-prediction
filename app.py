@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 app = Flask(__name__)
 
 # Load all required model files
-model_data = joblib.load('best_model.pkl')
+model, feature_columns = joblib.load('best_model.pkl')
 label_encoders = joblib.load('label_encoders.pkl')
 unique_values = joblib.load('unique_values.pkl')
 median_values = joblib.load('median_values.pkl')
@@ -76,10 +76,10 @@ def predict():
             raise ValueError("Invalid input values. Please select from the available options.")
 
         # Ensure correct column order
-        input_data = input_data[model_data['feature_names']]
+        input_data = input_data[feature_columns]
 
         # Make prediction
-        prediction = model_data['model'].predict(input_data)
+        prediction = model.predict(input_data)
         pred_value = float(prediction[0]) if isinstance(prediction, (np.ndarray, list)) else prediction
 
         # Pass prediction to the result template
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     # Check if required files exist and if static directory exists
     required_files = ['best_model.pkl', 'label_encoders.pkl', 'median_values.pkl', 'unique_values.pkl']
     if not all(os.path.exists(f) for f in required_files):
-        print("Error: Required model files are missing. Please train the model first using old.py")
+        print("Error: Required model files are missing. Please train the model first using main.py")
         exit(1)
 
     # Create static directory if it doesn't exist

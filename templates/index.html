@@ -24,15 +24,30 @@
         <form action="/predict" method="POST">
             <div class="form-group">
                 <label for="crop">Crop Name</label>
-                <input type="text" name="crop" class="form-control" placeholder="Enter Crop Name" required>
+                <select name="crop" class="form-control" required>
+                    <option value="">Select Crop</option>
+                    {% for crop in crops %}
+                    <option value="{{ crop }}">{{ crop }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group">
                 <label for="state">State Name</label>
-                <input type="text" name="state" class="form-control" placeholder="Enter State Name" required>
+                <select name="state" class="form-control" required>
+                    <option value="">Select State</option>
+                    {% for state in states %}
+                    <option value="{{ state }}">{{ state }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group">
                 <label for="season">Season</label>
-                <input type="text" name="season" class="form-control" placeholder="Enter Season" required>
+                <select name="season" class="form-control" required>
+                    <option value="">Select Season</option>
+                    {% for season in seasons %}
+                    <option value="{{ season }}">{{ season }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group">
                 <label for="year">Crop Year (Optional)</label>
