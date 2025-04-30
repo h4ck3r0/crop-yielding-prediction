@@ -22,6 +22,28 @@ print("\nUnique values in categorical columns:")
 for column in ['Crop', 'State', 'Season']:
     print(f"\n{column}:", df[column].unique())
 
+
+median_values = {
+    'Crop_Year': df['Crop_Year'].median(),
+    'Annual_Rainfall': df['Annual_Rainfall'].median(),
+    'Fertilizer': df['Fertilizer'].median() if 'Fertilizer' in df.columns else 0,
+    'Pesticide': df['Pesticide'].median() if 'Pesticide' in df.columns else 0,
+}
+
+# Save to file
+joblib.dump(median_values, 'median_values.pkl')
+
+
+# === Create unique values for dropdown options ===
+unique_values = {
+    'crops': sorted(df['Crop'].dropna().unique().tolist()),
+    'states': sorted(df['State'].dropna().unique().tolist()),
+    'seasons': sorted(df['Season'].dropna().unique().tolist()),
+}
+
+# Save to file
+joblib.dump(unique_values, 'unique_values.pkl')
+
 # Define the feature columns and target
 feature_columns = ['Crop', 'State', 'Season', 'Crop_Year', 'Annual_Rainfall', 'Fertilizer', 'Pesticide']
 target_column = 'Yield'

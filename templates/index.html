@@ -9,12 +9,18 @@
         body { background-color: #f4f4f4; }
         .container { margin-top: 50px; }
         .card { margin-top: 20px; }
-        .btn-primary { width: 100%; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="text-center">Crop Yield Prediction</h1>
+
+        {% if error %}
+            <div class="alert alert-danger text-center" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+        
         <form action="/predict" method="POST">
             <div class="form-group">
                 <label for="crop">Crop Name</label>
