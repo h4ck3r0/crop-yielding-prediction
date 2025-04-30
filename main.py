@@ -10,7 +10,6 @@ import joblib
 # Importing the dataset
 df = pd.read_csv('crop_yield.csv')
 
-# Cleaning the data
 # Clean the data - strip whitespace and standardize case
 for column in ['Crop', 'State']:
     df[column] = df[column].str.strip().str.title()
@@ -38,7 +37,7 @@ median_values = {
 joblib.dump(median_values, 'median_values.pkl')
 
 
-# === Create unique values for dropdown options ===
+# === Creating unique values for dropdown options ===
 unique_values = {
     'crops': sorted(df['Crop'].dropna().unique().tolist()),
     'states': sorted(df['State'].dropna().unique().tolist()),
@@ -198,7 +197,7 @@ def interactive_prediction():
     if season is None:
         return
 
-    # Create a dictionary with features in the correct order
+    # Create a dictionary with features
     input_dict = {}
     for col in feature_columns:
         if col == 'Crop':
