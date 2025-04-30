@@ -1,113 +1,124 @@
-# 🌾 Crop Yield Prediction using Machine Learning
 
-This project uses machine learning models to predict agricultural crop yields based on environmental and input-related features. The aim is to assist farmers and policymakers in understanding potential production outcomes and planning accordingly.
+# Crop Yield Prediction Web App
 
----
+This repository contains a Flask-based web application for predicting crop yields based on various factors such as crop type, state, season, and other agricultural data. The model used for prediction is a machine learning model that was trained using historical crop yield data. 
 
-## 📊 Dataset Overview
+The application provides users with an interactive form where they can enter relevant information, and the model will predict the yield in metric tons per hectare.
 
-The dataset (`crop_yield.csv`) contains the following columns:
+## Features
+- Predict crop yield based on various inputs such as crop name, state, season, year, rainfall, fertilizer usage, and pesticide usage.
+- Optional inputs are supported (crop year, rainfall, fertilizer, and pesticide usage). If not provided, default values based on median values from the dataset are used.
+- User-friendly form with error handling to ensure proper inputs are provided.
+- Displays predicted crop yield in metric tons per hectare.
 
-- `State`: Indian state
-- `Crop`: Name of the crop
-- `Season`: Season (e.g., Kharif, Rabi)
-- `Crop_Year`: Year of crop data
-- `Annual_Rainfall`: Total rainfall received
-- `Fertilizer`: Amount of fertilizer used (transformed using log)
-- `Pesticide`: Amount of pesticide used (transformed using log)
-- `Area`, `Production`: Used internally for cleaning
-- `Yield`: Crop production per unit area (target variable)
+## Prerequisites
 
----
+To run this project locally, you'll need to have Python 3.x installed. Additionally, you will need the following Python libraries:
 
-## 🛠️ Tech Stack
+- Flask
+- NumPy
+- Pandas
+- scikit-learn
+- joblib
+- Bootstrap (for frontend styling)
 
-- **Python** (core language)
-- **Pandas & NumPy** (data manipulation)
-- **Scikit-learn** (ML models, preprocessing, evaluation)
-- **Matplotlib** (visualizations)
-- **Joblib** (model persistence)
+## Installation
 
----
+Follow the steps below to get the project running on your local machine.
 
-## 🤖 Models Implemented
+1. Clone this repository to your local machine:
 
-- Linear Regression
-- Random Forest Regressor
-- Gradient Boosting Regressor
+   ```bash
+   git clone https://github.com/your-username/crop-yield-prediction.git
+   cd crop-yield-prediction
+   ```
 
-Each model is trained, evaluated, and compared using R² Score, Adjusted R² Score, and RMSE (Root Mean Squared Error). The best-performing model is automatically selected for prediction.
+2. Create and activate a virtual environment (optional, but recommended):
 
----
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
 
-## 📈 Evaluation Metrics
+3. Regenerate the model files and install requirements.txt:
 
-| Metric        | Description                                |
-|---------------|--------------------------------------------|
-| R² Score      | Measures how well predictions match actual |
-| Adjusted R²   | Adjusted for the number of predictors      |
-| RMSE          | Root of mean squared error in predictions  |
+   ```bash
+   pip install requirements.txt
+   python main.py
+   ```
 
-A bar chart of training vs. testing R² scores is also generated.
+4. Ensure that you have the required model files:
+   - `best_model.pkl`
+   - `label_encoders.pkl`
+   - `unique_values.pkl`
+   - `median_values.pkl`
 
----
+   These files can be obtained by training the model using the `old.py` script or from the project owner.
 
-## 🚀 Usage
+5. Run the Flask application:
 
-### 1. Install Requirements
+   ```bash
+   python app.py
+   ```
 
-```bash
-pip install numpy pandas scikit-learn matplotlib joblib
+6. Open your browser and go to `http://127.0.0.1:5000/` to use the application.
+
+## File Structure
+
+```
+/crop-yield-prediction
+│
+├── app.py                     # Main Flask application
+├── crop_yield.csv             # Dataset used for training the model (optional)
+├── best_model.pkl             # Pretrained model used for predictions
+├── label_encoders.pkl         # Label encoders used to encode categorical features
+├── unique_values.pkl          # Unique values for crops, states, and seasons
+├── median_values.pkl          # Median values for optional features
+├── requirements.txt           # List of Python dependencies
+├── /templates                 # HTML templates
+│   ├── index.html             # Form for prediction
+│   └── result.html            # Displays the prediction result
+└── /static                    # Static files like CSS, JS (if used)
 ```
 
-### 2. Prepare Dataset
+## Usage
 
-Place `crop_yield.csv` in the root directory. Ensure it contains the required columns.
+1. Visit the main page and fill in the form with the following details:
+   - **Crop Name** (Required)
+   - **State Name** (Required)
+   - **Season** (Required)
+   - **Crop Year** (Optional)
+   - **Annual Rainfall** (Optional)
+   - **Fertilizer Use** (Optional)
+   - **Pesticide Use** (Optional)
 
-### 3. Run Script
+2. Click on **Predict Yield** to get the predicted crop yield.
 
-```bash
-python crop_yield_prediction.py
-```
+3. The prediction will be displayed in metric tons per hectare.
 
-This will:
-- Preprocess the dataset
-- Train all models
-- Evaluate and select the best model
-- Save the encoders and final model
-- Launch an interactive CLI for yield prediction
+## Model Details
 
----
+The machine learning model used in this application is a **Gradient Boosting Regressor**, which was trained using historical crop yield data. The features used in the model include:
+- Crop
+- State
+- Season
+- Crop Year
+- Annual Rainfall
+- Fertilizer Usage
+- Pesticide Usage
 
-## 💬 Prediction Example
+The model predicts the crop yield based on these features.
 
-```text
-=== Crop Yield Prediction ===
-Enter crop name: Rice
-Enter state name: Tamil Nadu
-Enter season: Kharif
+## Troubleshooting
 
-Predicted yield for Rice in Tamil Nadu during Kharif season: 2.89 Metric Ton Per Unit Area
-```
+If you encounter issues such as missing files or errors in prediction:
+- Ensure that all required model files (`best_model.pkl`, `label_encoders.pkl`, `unique_values.pkl`, and `median_values.pkl`) are in place.
+- Ensure that you are using the correct versions of the required libraries.
 
----
+## Contributing
 
-## 🧾 Output Files
+If you'd like to contribute to this project, feel free to fork the repository, create a branch, and submit a pull request with your changes.
 
-- `label_encoders.pkl`: Serialized label encoders for future use
-- `best_crop_yield_model.pkl`: Saved best ML model
+## License
 
----
-
-## 👤 Author
-
-**Raj Aryan**  
-🎓 B.Tech @ RNSIT  
-🔗 [LinkedIn](https://www.linkedin.com/in/h4ck3r0)  
-💻 [GitHub](https://github.com/h4ck3r0)
-
----
-
-## 📄 License
-
-Licensed under the [MIT License](LICENSE). Feel free to use and modify.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
